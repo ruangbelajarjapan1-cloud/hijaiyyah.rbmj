@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Blok Hijaiyyah</title>
+    <title>Game Puzzle Hijaiyyah</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,26 +11,27 @@
         <header>
             <button id="lang-toggle" onclick="toggleLanguage()">ID / 日本語</button>
             <div class="stats">
-                <span data-i18n="level">Level</span>: <span id="level-display">1</span>/28
+                <span data-i18n="level">Level</span>: <span id="level-display">1</span>/40
                 <br>
                 <span data-i18n="score">Skor</span>: <span id="score-display">0</span>
             </div>
         </header>
 
         <main>
-            <h2 id="instruction" data-i18n="instruction">Pilih huruf yang benar!</h2>
+            <div id="stage-badge" class="stage-badge">Tahap 1: Pengenalan Huruf</div>
+            
+            <h2 id="instruction" data-i18n="instruction">Ketuk kepingan yang pas!</h2>
             
             <div class="target-container">
-                <div id="target-slot" class="slot empty">?</div>
+                <div id="target-slot" class="slot empty"></div>
                 <div id="feedback-message" class="feedback hidden"></div>
             </div>
 
-            <div id="options-container" class="options-grid">
-                </div>
+            <div id="options-container" class="options-grid"></div>
         </main>
 
         <div id="win-screen" class="hidden">
-            <h1 data-i18n="winTitle">Masyaallah, Luar Biasa!</h1>
+            <h1 data-i18n="winTitle">Masyaallah, Selesai!</h1>
             <p><span data-i18n="finalScore">Skor Akhir Kamu</span>: <span id="final-score"></span></p>
             <button onclick="initGame()" data-i18n="restartBtn">Main Lagi</button>
         </div>
