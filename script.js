@@ -1,26 +1,41 @@
-// Daftar lengkap 29 huruf hijaiyyah
 const allLetters = ['ا','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','ه','و','ء','ي'];
+
+// Unicode untuk Harakat
+const HARAKAT = {
+    FATHAH: '\u064E', // Bunyi A
+    KASRAH: '\u0650', // Bunyi I
+    DAMMAH: '\u064F'  // Bunyi U
+};
 
 const translations = {
     id: {
-        level: "Level", score: "Skor", instruction: "Ketuk kepingan yang pas untuk lubang ini!",
-        winTitle: "Masyaallah, Selesai!", finalScore: "Skor Akhir Kamu",
-        restartBtn: "Main Lagi", correctFeedback: "Pas!", wrongFeedback: "Belum pas, coba lagi!"
+        level: "Level", score: "Skor", instruction: "Ketuk kepingan yang pas!",
+        winTitle: "Masyaallah, Selesai!", finalScore: "Skor Akhir Kamu", restartBtn: "Main Lagi",
+        correctFeedback: "Pas!", wrongFeedback: "Belum pas, coba lagi!",
+        stage1: "Tahap 1: Pengenalan Huruf",
+        stage2: "Tahap 2: Fathah (A)",
+        stage3: "Tahap 3: Kasrah (I)",
+        stage4: "Tahap 4: Dammah (U)"
     },
     jp: {
-        level: "レベル", score: "スコア", instruction: "この穴に合うピースをタップして！",
-        winTitle: "マシャアッラー、完了！", finalScore: "あなたの最終スコア",
-        restartBtn: "もう一度プレイ", correctFeedback: "ぴったり！", wrongFeedback: "合わないよ、もう一度！"
+        level: "レベル", score: "スコア", instruction: "ぴったりなピースをタップ！",
+        winTitle: "完了！素晴らしい！", finalScore: "最終スコア", restartBtn: "もう一度",
+        correctFeedback: "ぴったり！", wrongFeedback: "ちがうよ、もう一度！",
+        stage1: "ステージ1：文字の紹介",
+        stage2: "ステージ2：ファトハ (A)",
+        stage3: "ステージ3：カスラ (I)",
+        stage4: "ステージ4：ダンマ (U)"
     }
 };
 
 let currentLang = 'id';
 let score = 0;
 let currentLevel = 1;
-let maxLevel = 29;
+let maxLevel = 40; // Total 40 Level (10 per tahap)
 let targetPool = []; 
 let currentTarget = ''; 
-let isAnimating = false; // Penjaga agar tidak bisa klik saat animasi berjalan
+let currentHarakat = ''; // Menyimpan harakat yang sedang aktif
+let isAnimating = false;
 
 const levelDisplay = document.getElementById('level-display');
 const scoreDisplay = document.getElementById('score-display');
@@ -30,10 +45,12 @@ const feedbackMessage = document.getElementById('feedback-message');
 const mainGame = document.querySelector('main');
 const winScreen = document.getElementById('win-screen');
 const finalScore = document.getElementById('final-score');
+const stageBadge = document.getElementById('stage-badge');
 
 function toggleLanguage() {
     currentLang = currentLang === 'id' ? 'jp' : 'id';
     updateUIText();
+    updateStageBadge(); // Update bahasa untuk badge juga
 }
 
 function updateUIText() {
@@ -53,39 +70,71 @@ function shuffleArray(array) {
     return arr;
 }
 
+// Fungsi untuk menentukan tahap berdasarkan level
+function checkStageAndHarakat() {
+    if (currentLevel <= 10) {
+        currentHarakat = '';
+        return 'stage1';
+    } else if (currentLevel <= 20) {
+        currentHarakat = HARAKAT.FATHAH;
+        document.body.style.backgroundColor = '#EAE8E3'; // Ubah warna latar sedikit
+        return 'stage2';
+    } else if (currentLevel <= 30) {
+        currentHarakat = HARAKAT.KASRAH;
+        document.body.style.backgroundColor = '#E3EAE5';
+        return 'stage3';
+    } else {
+        currentHarakat = HARAKAT.DAMMAH;
+        document.body.style.backgroundColor = '#EAE5E3';
+        return 'stage4';
+    }
+}
+
+function updateStageBadge() {
+    const stageKey = checkStageAndHarakat();
+    stageBadge.innerText = translations[currentLang][stageKey];
+}
+
 function initGame() {
-    score = 0;
-    currentLevel = 1;
+    score = 0; currentLevel = 1; document.body.style.backgroundColor = 'var(--bg-color)';
     targetPool = shuffleArray(allLetters); 
-    mainGame.classList.remove('hidden');
-    winScreen.classList.add('hidden');
-    updateScoreBoard();
-    updateUIText();
-    loadLevel();
+    mainGame.classList.remove('hidden'); winScreen.classList.add('hidden');
+    updateScoreBoard(); updateUIText(); updateStageBadge(); loadLevel();
 }
 
 function loadLevel() {
-    isAnimating = false; // Buka kunci klik
+    isAnimating = false;
     targetSlot.className = 'slot empty';
-    feedbackMessage.innerText = '';
-    feedbackMessage.className = 'feedback hidden';
-    // Pastikan grid pilihan bisa diklik lagi
+    feedbackMessage.innerText = ''; feedbackMessage.className = 'feedback hidden';
     optionsContainer.style.pointerEvents = 'auto'; 
 
-    currentTarget = targetPool.pop();
-    // Tampilkan bayangan samar di lubang target
+    updateStageBadge();
+
+    // Jika targetPool habis (setelah 29 huruf), acak ulang dari awal
+    if (targetPool.length === 0) {
+        targetPool = shuffleArray(allLetters);
+    }
+
+    // Ambil huruf dasar, lalu TAMBAHKAN HARAKAT
+    let baseLetter = targetPool.pop();
+    currentTarget = baseLetter + currentHarakat;
+
+    // Tampilkan di target slot
     targetSlot.innerText = currentTarget;
 
+    // Atur kesulitan opsi (berdasarkan level dalam tahap)
     let numOptions = 3;
-    if (currentLevel >= 10) numOptions = 4;
-    if (currentLevel >= 20) numOptions = 6;
+    let levelInStage = ((currentLevel - 1) % 10) + 1; // 1 sampai 10 di setiap tahap
+    if (levelInStage >= 5) numOptions = 4;
+    if (levelInStage >= 8) numOptions = 6;
 
     let options = [currentTarget];
-    let remainingLetters = allLetters.filter(l => l !== currentTarget);
+    let remainingLetters = allLetters.filter(l => l !== baseLetter);
     remainingLetters = shuffleArray(remainingLetters);
     
+    // Pengecoh juga harus memiliki harakat yang sama agar adil
     for (let i = 0; i < numOptions - 1; i++) {
-        options.push(remainingLetters[i]);
+        options.push(remainingLetters[i] + currentHarakat);
     }
 
     options = shuffleArray(options);
@@ -94,60 +143,41 @@ function loadLevel() {
 
 function renderOptions(optionsArray) {
     optionsContainer.innerHTML = ''; 
-    optionsArray.forEach(letter => {
+    optionsArray.forEach(letterWithHarakat => {
         const block = document.createElement('div');
         block.className = 'block';
-        block.innerText = letter;
-        // PENTING: Kita kirim juga elemen HTML-nya (e.currentTarget) agar bisa dianimasikan
-        block.onclick = (e) => checkAnswer(letter, e.currentTarget);
+        block.innerText = letterWithHarakat;
+        block.onclick = (e) => checkAnswer(letterWithHarakat, e.currentTarget);
         optionsContainer.appendChild(block);
     });
 }
 
-// --- FUNGSI INTI BARU: CEK JAWABAN & ANIMASI TERBANG ---
 function checkAnswer(selectedLetter, blockElement) {
-    // Cegah klik ganda jika sedang ada animasi
     if (isAnimating) return;
 
     if (selectedLetter === currentTarget) {
-        // --- JAWABAN BENAR: Mulai Animasi Terbang ---
         isAnimating = true;
         feedbackMessage.classList.add('hidden');
-        
-        // 1. Kunci area pilihan agar tidak bisa klik balok lain
         optionsContainer.style.pointerEvents = 'none';
 
-        // 2. Hitung Posisi Awal (Balok yang diklik) dan Akhir (Slot Target)
         const blockRect = blockElement.getBoundingClientRect();
         const targetRect = targetSlot.getBoundingClientRect();
 
-        // Hitung selisih jarak (Delta X dan Y) untuk terbang ke tengah target
-        // Ditambah penyesuaian sedikit agar pas di tengah karena ukuran mungkin beda tipis
         const deltaX = targetRect.left - blockRect.left + (targetRect.width - blockRect.width) / 2;
         const deltaY = targetRect.top - blockRect.top + (targetRect.height - blockRect.height) / 2;
 
-        // 3. Tambahkan kelas 'flying' untuk efek visual melayang
         blockElement.classList.add('flying');
-        // 4. Terapkan perintah terbang (transform translate)
         blockElement.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
 
-        // 5. Tunggu sampai animasi selesai (sesuai durasi di CSS transition: 0.6s)
         setTimeout(() => {
-            // --- SETELAH MENDARAT ---
-            
-            // Sembunyikan balok yang terbang tadi (karena sudah "masuk")
             blockElement.style.opacity = '0';
-            
-            // Ubah lubang target menjadi terisi penuh
             targetSlot.className = 'slot filled';
             
-            // Update Skor dan Pesan
             score += 10;
             feedbackMessage.innerText = translations[currentLang].correctFeedback;
             feedbackMessage.className = 'feedback correct';
             updateScoreBoard();
 
-            // Jeda sebentar sebelum lanjut level berikutnya
             setTimeout(() => {
                 currentLevel++;
                 if (currentLevel > maxLevel) {
@@ -156,24 +186,18 @@ function checkAnswer(selectedLetter, blockElement) {
                     loadLevel();
                 }
             }, 1000); 
-
-        }, 600); // Waktu tunggu 600ms (harus sama dengan durasi transisi CSS)
+        }, 600); 
 
     } else {
-        // --- JAWABAN SALAH ---
         score = Math.max(0, score - 5); 
         feedbackMessage.innerText = translations[currentLang].wrongFeedback;
         feedbackMessage.className = 'feedback wrong';
         updateScoreBoard();
         
-        // Efek getar sederhana (opsional, bisa ditambahkan nanti)
         blockElement.style.transform = 'translateX(5px)';
         setTimeout(() => { blockElement.style.transform = 'translateX(-5px)'; }, 100);
         setTimeout(() => { blockElement.style.transform = 'none'; }, 200);
-
-        setTimeout(() => {
-            feedbackMessage.classList.add('hidden');
-        }, 1500);
+        setTimeout(() => { feedbackMessage.classList.add('hidden'); }, 1500);
     }
 }
 
