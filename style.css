@@ -6,13 +6,12 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Palet warna lembut (earth tones/pastel) */
 :root {
-    --bg-color: #F4F1EA; /* Krem lembut */
-    --primary-color: #2A9D8F; /* Hijau sage/Teal */
-    --accent-color: #E9C46A; /* Kuning pasir */
-    --text-color: #264653; /* Biru gelap keabu-abuan */
-    --wrong-color: #E76F51; /* Merah bata lembut */
+    --bg-color: #F4F1EA;
+    --primary-color: #2A9D8F;
+    --accent-color: #E9C46A;
+    --text-color: #264653;
+    --wrong-color: #E76F51;
     --block-bg: #FFFFFF;
 }
 
@@ -23,13 +22,12 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    /* Mencegah zoom tidak sengaja di mobile */
     touch-action: manipulation; 
 }
 
 #game-container {
     width: 100%;
-    max-width: 500px; /* Ukuran maksimal untuk tablet/HP */
+    max-width: 500px;
     background: #FAFAFA;
     padding: 20px;
     border-radius: 20px;
@@ -57,17 +55,9 @@ header {
     color: var(--text-color);
 }
 
-.stats {
-    font-size: 1.1rem;
-    font-weight: bold;
-    text-align: right;
-}
+.stats { font-size: 1.1rem; font-weight: bold; text-align: right; }
 
-/* Area Target */
-h2 {
-    margin-bottom: 20px;
-    font-size: 1.3rem;
-}
+h2 { margin-bottom: 20px; font-size: 1.3rem; }
 
 .target-container {
     display: flex;
@@ -77,84 +67,72 @@ h2 {
     min-height: 120px;
 }
 
-/* Slot Kosong atau Terisi */
+/* --- DESAIN CETAKAN LUBANG (BAYANGAN) --- */
 .slot {
-    width: 80px;
-    height: 80px;
-    border: 4px dashed var(--primary-color);
-    border-radius: 15px;
+    width: 90px;
+    height: 90px;
+    border: 4px dashed #B0BEC5; /* Warna abu-abu pinggiran cetakan */
+    border-radius: 12px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 3rem;
-    color: var(--primary-color);
-    background-color: transparent;
+    font-size: 3.5rem;
+    color: #CFD8DC; /* Warna huruf bayangan (samar-samar) */
+    background-color: #ECEFF1; /* Latar belakang lubang */
     transition: all 0.3s ease;
+    box-shadow: inset 0 4px 6px rgba(0,0,0,0.1); /* Efek melengkung ke dalam */
 }
 
+/* Saat balok berhasil dipasang */
 .slot.filled {
-    border-style: solid;
+    border: 4px solid var(--primary-color);
     background-color: var(--primary-color);
     color: white;
+    box-shadow: 0 6px 0 #1D7A6F, inset 0 2px rgba(255,255,255,0.3);
+    transform: translateY(-2px);
 }
 
-/* Pesan Feedback (Benar/Salah) */
-.feedback {
-    margin-top: 10px;
-    font-weight: bold;
-    font-size: 1.2rem;
-    height: 24px;
-}
+.feedback { margin-top: 10px; font-weight: bold; font-size: 1.2rem; height: 24px; }
 .feedback.correct { color: var(--primary-color); }
 .feedback.wrong { color: var(--wrong-color); }
 
-/* Grid Pilihan Huruf */
 .options-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 15px;
     justify-content: center;
+    padding-bottom: 15px; /* Ruang untuk efek 3D */
 }
 
-/* Blok Huruf */
+/* --- DESAIN BALOK MAINAN (Gaya Lego/Roblox) --- */
 .block {
-    width: 70px;
-    height: 70px;
+    width: 80px;
+    height: 80px;
     background-color: var(--block-bg);
-    border: 3px solid #E0E0E0;
+    border: 3px solid #CFD8DC;
     border-radius: 12px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 2.5rem;
+    font-size: 3rem;
     cursor: pointer;
-    box-shadow: 0 4px 0 #E0E0E0; /* Efek 3D */
+    color: var(--text-color);
+    /* Efek 3D Balok Timbul */
+    box-shadow: 0 8px 0 #B0BEC5; 
     transition: transform 0.1s, box-shadow 0.1s;
     user-select: none;
 }
 
+/* Efek saat balok ditekan (seperti memencet tombol/memasang balok) */
 .block:active {
-    transform: translateY(4px);
-    box-shadow: 0 0 0 #E0E0E0;
+    transform: translateY(8px);
+    box-shadow: 0 0 0 #B0BEC5;
 }
 
-.block:hover {
-    border-color: var(--primary-color);
-}
+.hidden { display: none !important; }
 
-/* Utility Classes */
-.hidden {
-    display: none !important;
-}
-
-/* Layar Menang */
-#win-screen {
-    padding: 40px 10px;
-}
-#win-screen h1 {
-    color: var(--primary-color);
-    margin-bottom: 15px;
-}
+#win-screen { padding: 40px 10px; }
+#win-screen h1 { color: var(--primary-color); margin-bottom: 15px; }
 #win-screen button {
     margin-top: 20px;
     background-color: var(--primary-color);
@@ -164,15 +142,6 @@ h2 {
     font-size: 1.2rem;
     border-radius: 10px;
     cursor: pointer;
-    box-shadow: 0 4px 0 #1D7A6F;
+    box-shadow: 0 6px 0 #1D7A6F;
 }
-#win-screen button:active {
-    transform: translateY(4px);
-    box-shadow: 0 0 0 #1D7A6F;
-}
-
-/* Responsif untuk tablet (layar sedikit lebih besar) */
-@media (min-width: 600px) {
-    .slot { width: 100px; height: 100px; font-size: 4rem; }
-    .block { width: 90px; height: 90px; font-size: 3rem; }
-}
+#win-screen button:active { transform: translateY(6px); box-shadow: 0 0 0 #1D7A6F; }
