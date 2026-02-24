@@ -1,7 +1,6 @@
 // --- 1. DATA MASTER ---
 // Daftar lengkap 28 huruf hijaiyyah
-const allLetters = ['ا','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','ه','و','ي'];
-
+const allLetters = ['ا','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','ه','و','ء','ي'];
 // Kamus terjemahan (Bahasa Indonesia & Bahasa Jepang)
 const translations = {
     id: {
@@ -30,7 +29,7 @@ const translations = {
 let currentLang = 'id';
 let score = 0;
 let currentLevel = 1;
-let maxLevel = 28;
+let maxLevel = 29;
 let targetPool = []; // Menyimpan sisa huruf yang belum ditebak
 let currentTarget = ''; 
 
