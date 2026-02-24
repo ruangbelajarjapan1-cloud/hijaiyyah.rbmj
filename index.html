@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Puzzle Hijaiyyah</title>
+    <title>Super Puzzle Hijaiyyah</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Amiri&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,19 +12,20 @@
         <header>
             <button id="lang-toggle" onclick="toggleLanguage()">ID / 日本語</button>
             <div class="stats">
-                <span data-i18n="level">Level</span>: <span id="level-display">1</span>/40
-                <br>
-                <span data-i18n="score">Skor</span>: <span id="score-display">0</span>
+                <div class="level-box">🧩 <span data-i18n="level">Level</span>: <span id="level-display">1</span>/40</div>
+                <div class="score-box">⭐ <span data-i18n="score">Skor</span>: <span id="score-display">0</span></div>
             </div>
         </header>
 
         <main>
             <div id="stage-badge" class="stage-badge">Tahap 1: Pengenalan Huruf</div>
             
-            <h2 id="instruction" data-i18n="instruction">Ketuk kepingan yang pas!</h2>
+            <h2 id="instruction" data-i18n="instruction">Pasangkan huruf yang tepat!</h2>
             
             <div class="target-container">
-                <div id="target-slot" class="slot empty"></div>
+                <div id="target-slot" class="slot empty">
+                    <span id="target-text">?</span>
+                </div>
                 <div id="feedback-message" class="feedback hidden"></div>
             </div>
 
@@ -31,9 +33,9 @@
         </main>
 
         <div id="win-screen" class="hidden">
-            <h1 data-i18n="winTitle">Masyaallah, Selesai!</h1>
-            <p><span data-i18n="finalScore">Skor Akhir Kamu</span>: <span id="final-score"></span></p>
-            <button onclick="initGame()" data-i18n="restartBtn">Main Lagi</button>
+            <h1 data-i18n="winTitle">Masyaallah, Luar Biasa!</h1>
+            <p><span data-i18n="finalScore">Skor Akhir Kamu</span>: <span id="final-score">0</span></p>
+            <button onclick="initGame()" class="btn-start" data-i18n="restartBtn">Main Lagi ▶</button>
         </div>
     </div>
 
