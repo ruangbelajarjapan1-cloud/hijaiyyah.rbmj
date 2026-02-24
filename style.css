@@ -3,6 +3,9 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    /* Mencegah select text yang mengganggu saat bermain */
+    -webkit-user-select: none;
+    user-select: none;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -22,7 +25,8 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    touch-action: manipulation; 
+    touch-action: manipulation;
+    overflow: hidden; /* Mencegah scroll saat ada animasi terbang */
 }
 
 #game-container {
@@ -33,6 +37,7 @@ body {
     border-radius: 20px;
     box-shadow: 0 8px 16px rgba(0,0,0,0.1);
     text-align: center;
+    position: relative;
 }
 
 /* Header */
@@ -65,68 +70,80 @@ h2 { margin-bottom: 20px; font-size: 1.3rem; }
     align-items: center;
     margin-bottom: 30px;
     min-height: 120px;
+    position: relative; /* Penting untuk kalkulasi posisi */
 }
 
-/* --- DESAIN CETAKAN LUBANG (BAYANGAN) --- */
+/* --- DESAIN CETAKAN LUBANG PUZZLE --- */
 .slot {
-    width: 90px;
-    height: 90px;
-    border: 4px dashed #B0BEC5; /* Warna abu-abu pinggiran cetakan */
-    border-radius: 12px;
+    width: 100px;
+    height: 100px;
+    border: 4px dashed #B0BEC5;
+    border-radius: 15px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 3.5rem;
-    color: #CFD8DC; /* Warna huruf bayangan (samar-samar) */
-    background-color: #ECEFF1; /* Latar belakang lubang */
-    transition: all 0.3s ease;
-    box-shadow: inset 0 4px 6px rgba(0,0,0,0.1); /* Efek melengkung ke dalam */
+    font-size: 4rem;
+    color: #CFD8DC; /* Bayangan samar */
+    background-color: #ECEFF1;
+    /* Transisi halus saat berubah status */
+    transition: all 0.3s ease-out; 
+    box-shadow: inset 0 4px 6px rgba(0,0,0,0.1);
 }
 
-/* Saat balok berhasil dipasang */
+/* Saat kepingan puzzle terpasang */
 .slot.filled {
     border: 4px solid var(--primary-color);
     background-color: var(--primary-color);
     color: white;
-    box-shadow: 0 6px 0 #1D7A6F, inset 0 2px rgba(255,255,255,0.3);
-    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #1D7A6F; /* Efek timbul setelah terpasang */
+    transform: scale(1.05); /* Sedikit membesar tandanya pas */
 }
 
-.feedback { margin-top: 10px; font-weight: bold; font-size: 1.2rem; height: 24px; }
+.feedback { margin-top: 15px; font-weight: bold; font-size: 1.2rem; min-height: 24px; }
 .feedback.correct { color: var(--primary-color); }
 .feedback.wrong { color: var(--wrong-color); }
 
 .options-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 20px;
     justify-content: center;
-    padding-bottom: 15px; /* Ruang untuk efek 3D */
+    padding: 10px;
+    /* Agar balok yang terbang tidak tertutup container lain */
+    position: relative; 
+    z-index: 1;
 }
 
-/* --- DESAIN BALOK MAINAN (Gaya Lego/Roblox) --- */
+/* --- DESAIN KEPINGAN PUZZLE/BALOK --- */
 .block {
-    width: 80px;
-    height: 80px;
+    width: 85px;
+    height: 85px;
     background-color: var(--block-bg);
     border: 3px solid #CFD8DC;
-    border-radius: 12px;
+    border-radius: 15px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 3rem;
+    font-size: 3.5rem;
     cursor: pointer;
     color: var(--text-color);
-    /* Efek 3D Balok Timbul */
-    box-shadow: 0 8px 0 #B0BEC5; 
-    transition: transform 0.1s, box-shadow 0.1s;
-    user-select: none;
+    box-shadow: 0 6px 0 #B0BEC5;
+    /* KUNCI ANIMASI: Transisi transform untuk efek terbang mulus */
+    transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 0.2s, opacity 0.3s;
+    position: relative;
+    z-index: 2;
 }
 
-/* Efek saat balok ditekan (seperti memencet tombol/memasang balok) */
 .block:active {
-    transform: translateY(8px);
-    box-shadow: 0 0 0 #B0BEC5;
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #B0BEC5;
+}
+
+/* Kelas khusus saat balok sedang terbang */
+.block.flying {
+    z-index: 100 !important; /* Pastikan di atas segalanya */
+    box-shadow: 0 15px 30px rgba(0,0,0,0.2) !important; /* Bayangan besar seolah melayang tinggi */
+    pointer-events: none; /* Tidak bisa diklik lagi saat terbang */
 }
 
 .hidden { display: none !important; }
