@@ -1,63 +1,70 @@
-const allLetters = ['ا','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','ه','و','ء','ي'];
+// Data Lengkap Huruf dan Nama (Untuk Text-to-Speech)
+const lettersData = [
+    { char: 'ا', name: 'Alif' }, { char: 'ب', name: 'Ba' }, { char: 'ت', name: 'Ta' },
+    { char: 'ث', name: 'Tsa' }, { char: 'ج', name: 'Jim' }, { char: 'ح', name: 'Ha' },
+    { char: 'خ', name: 'Kho' }, { char: 'د', name: 'Dal' }, { char: 'ذ', name: 'Dzal' },
+    { char: 'ر', name: 'Ro' }, { char: 'ز', name: 'Zai' }, { char: 'س', name: 'Sin' },
+    { char: 'ش', name: 'Syin' }, { char: 'ص', name: 'Shod' }, { char: 'ض', name: 'Dhod' },
+    { char: 'ط', name: 'Tho' }, { char: 'ظ', name: 'Zho' }, { char: 'ع', name: 'Ain' },
+    { char: 'غ', name: 'Ghoin' }, { char: 'ف', name: 'Fa' }, { char: 'ق', name: 'Qof' },
+    { char: 'ك', name: 'Kaf' }, { char: 'ل', name: 'Lam' }, { char: 'م', name: 'Mim' },
+    { char: 'ن', name: 'Nun' }, { char: 'ه', name: 'Ha' }, { char: 'و', name: 'Wawu' },
+    { char: 'ء', name: 'Hamzah' }, { char: 'ي', name: 'Ya' }
+];
 
-// Unicode untuk Harakat
-const HARAKAT = {
-    FATHAH: '\u064E', // Bunyi A
-    KASRAH: '\u0650', // Bunyi I
-    DAMMAH: '\u064F'  // Bunyi U
-};
+const HARAKAT = { FATHAH: '\u064E', KASRAH: '\u0650', DAMMAH: '\u064F' };
 
 const translations = {
     id: {
-        level: "Level", score: "Skor", instruction: "Ketuk kepingan yang pas!",
-        winTitle: "Masyaallah, Selesai!", finalScore: "Skor Akhir Kamu", restartBtn: "Main Lagi",
-        correctFeedback: "Pas!", wrongFeedback: "Belum pas, coba lagi!",
-        stage1: "Tahap 1: Pengenalan Huruf",
-        stage2: "Tahap 2: Fathah (A)",
-        stage3: "Tahap 3: Kasrah (I)",
-        stage4: "Tahap 4: Dammah (U)"
+        level: "Level", score: "Skor", instruction: "Pasangkan huruf yang tepat!",
+        winTitle: "Masyaallah, Luar Biasa!", finalScore: "Skor Akhir Kamu", restartBtn: "Main Lagi ▶",
+        correctFeedback: "Hebat! ⭐", wrongFeedback: "Bukan yang itu!",
+        stage1: "Tahap 1: Pengenalan Huruf", stage2: "Tahap 2: Fathah (A)",
+        stage3: "Tahap 3: Kasrah (I)", stage4: "Tahap 4: Dammah (U)",
+        voiceCmd: "Pasangkan huruf "
     },
     jp: {
-        level: "レベル", score: "スコア", instruction: "ぴったりなピースをタップ！",
-        winTitle: "完了！素晴らしい！", finalScore: "最終スコア", restartBtn: "もう一度",
-        correctFeedback: "ぴったり！", wrongFeedback: "ちがうよ、もう一度！",
-        stage1: "ステージ1：文字の紹介",
-        stage2: "ステージ2：ファトハ (A)",
-        stage3: "ステージ3：カスラ (I)",
-        stage4: "ステージ4：ダンマ (U)"
+        level: "レベル", score: "スコア", instruction: "正しい文字をはめよう！",
+        winTitle: "素晴らしい！", finalScore: "最終スコア", restartBtn: "もう一度 ▶",
+        correctFeedback: "すごい！ ⭐", wrongFeedback: "ちがうよ！",
+        stage1: "ステージ1：文字の紹介", stage2: "ステージ2：ファトハ (A)",
+        stage3: "ステージ3：カスラ (I)", stage4: "ステージ4：ダンマ (U)",
+        voiceCmd: " をはめてね"
     }
 };
 
-let currentLang = 'id';
-let score = 0;
-let currentLevel = 1;
-let maxLevel = 40; // Total 40 Level (10 per tahap)
-let targetPool = []; 
-let currentTarget = ''; 
-let currentHarakat = ''; // Menyimpan harakat yang sedang aktif
-let isAnimating = false;
+let currentLang = 'id'; let score = 0; let currentLevel = 1; let maxLevel = 40;
+let targetPool = []; let currentTargetData = null; let currentHarakat = ''; let isAnimating = false;
 
 const levelDisplay = document.getElementById('level-display');
 const scoreDisplay = document.getElementById('score-display');
 const optionsContainer = document.getElementById('options-container');
 const targetSlot = document.getElementById('target-slot');
+const targetText = document.getElementById('target-text');
 const feedbackMessage = document.getElementById('feedback-message');
 const mainGame = document.querySelector('main');
 const winScreen = document.getElementById('win-screen');
-const finalScore = document.getElementById('final-score');
 const stageBadge = document.getElementById('stage-badge');
+
+// Fitur Suara (Text-to-Speech)
+function speak(letterName) {
+    window.speechSynthesis.cancel();
+    const t = translations[currentLang];
+    let msg = currentLang === 'jp' ? letterName + t.voiceCmd : t.voiceCmd + letterName;
+    const utterance = new SpeechSynthesisUtterance(msg);
+    utterance.lang = currentLang === 'jp' ? 'ja-JP' : 'id-ID';
+    utterance.rate = 0.9; // Diperlambat sedikit untuk anak-anak
+    window.speechSynthesis.speak(utterance);
+}
 
 function toggleLanguage() {
     currentLang = currentLang === 'id' ? 'jp' : 'id';
-    updateUIText();
-    updateStageBadge(); // Update bahasa untuk badge juga
+    updateUIText(); updateStageBadge();
 }
 
 function updateUIText() {
-    const elements = document.querySelectorAll('[data-i18n]');
-    elements.forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        el.innerText = translations[currentLang][key];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.innerText = translations[currentLang][el.getAttribute('data-i18n')];
     });
 }
 
@@ -70,99 +77,86 @@ function shuffleArray(array) {
     return arr;
 }
 
-// Fungsi untuk menentukan tahap berdasarkan level
 function checkStageAndHarakat() {
-    if (currentLevel <= 10) {
-        currentHarakat = '';
-        return 'stage1';
-    } else if (currentLevel <= 20) {
-        currentHarakat = HARAKAT.FATHAH;
-        document.body.style.backgroundColor = '#EAE8E3'; // Ubah warna latar sedikit
-        return 'stage2';
-    } else if (currentLevel <= 30) {
-        currentHarakat = HARAKAT.KASRAH;
-        document.body.style.backgroundColor = '#E3EAE5';
-        return 'stage3';
-    } else {
-        currentHarakat = HARAKAT.DAMMAH;
-        document.body.style.backgroundColor = '#EAE5E3';
-        return 'stage4';
-    }
+    if (currentLevel <= 10) { currentHarakat = ''; document.body.style.backgroundColor = '#caf0f8'; return 'stage1'; }
+    else if (currentLevel <= 20) { currentHarakat = HARAKAT.FATHAH; document.body.style.backgroundColor = '#d8f3dc'; return 'stage2'; }
+    else if (currentLevel <= 30) { currentHarakat = HARAKAT.KASRAH; document.body.style.backgroundColor = '#fcf6bd'; return 'stage3'; }
+    else { currentHarakat = HARAKAT.DAMMAH; document.body.style.backgroundColor = '#ffe5d9'; return 'stage4'; }
 }
 
 function updateStageBadge() {
-    const stageKey = checkStageAndHarakat();
-    stageBadge.innerText = translations[currentLang][stageKey];
+    stageBadge.innerText = translations[currentLang][checkStageAndHarakat()];
 }
 
 function initGame() {
-    score = 0; currentLevel = 1; document.body.style.backgroundColor = 'var(--bg-color)';
-    targetPool = shuffleArray(allLetters); 
+    score = 0; currentLevel = 1;
+    targetPool = shuffleArray(lettersData);
     mainGame.classList.remove('hidden'); winScreen.classList.add('hidden');
     updateScoreBoard(); updateUIText(); updateStageBadge(); loadLevel();
 }
 
 function loadLevel() {
     isAnimating = false;
-    targetSlot.className = 'slot empty';
+    targetSlot.className = 'slot empty'; targetText.style.display = 'block';
     feedbackMessage.innerText = ''; feedbackMessage.className = 'feedback hidden';
-    optionsContainer.style.pointerEvents = 'auto'; 
+    optionsContainer.style.pointerEvents = 'auto';
 
     updateStageBadge();
+    if (targetPool.length === 0) targetPool = shuffleArray(lettersData);
 
-    // Jika targetPool habis (setelah 29 huruf), acak ulang dari awal
-    if (targetPool.length === 0) {
-        targetPool = shuffleArray(allLetters);
-    }
+    currentTargetData = targetPool.pop();
+    let displayTarget = currentTargetData.char + currentHarakat;
+    targetText.innerText = displayTarget;
 
-    // Ambil huruf dasar, lalu TAMBAHKAN HARAKAT
-    let baseLetter = targetPool.pop();
-    currentTarget = baseLetter + currentHarakat;
+    // Suarakan nama huruf saat level dimulai
+    speak(currentTargetData.name);
 
-    // Tampilkan di target slot
-    targetSlot.innerText = currentTarget;
-
-    // Atur kesulitan opsi (berdasarkan level dalam tahap)
-    let numOptions = 3;
-    let levelInStage = ((currentLevel - 1) % 10) + 1; // 1 sampai 10 di setiap tahap
-    if (levelInStage >= 5) numOptions = 4;
-    if (levelInStage >= 8) numOptions = 6;
-
-    let options = [currentTarget];
-    let remainingLetters = allLetters.filter(l => l !== baseLetter);
-    remainingLetters = shuffleArray(remainingLetters);
+    let numOptions = ((currentLevel - 1) % 10) + 1 >= 5 ? 4 : 3;
+    let options = [currentTargetData];
+    let remaining = shuffleArray(lettersData.filter(l => l.char !== currentTargetData.char));
     
-    // Pengecoh juga harus memiliki harakat yang sama agar adil
-    for (let i = 0; i < numOptions - 1; i++) {
-        options.push(remainingLetters[i] + currentHarakat);
-    }
-
-    options = shuffleArray(options);
-    renderOptions(options);
+    for (let i = 0; i < numOptions - 1; i++) options.push(remaining[i]);
+    
+    renderOptions(shuffleArray(options));
 }
 
 function renderOptions(optionsArray) {
-    optionsContainer.innerHTML = ''; 
-    optionsArray.forEach(letterWithHarakat => {
+    optionsContainer.innerHTML = '';
+    optionsArray.forEach(data => {
         const block = document.createElement('div');
         block.className = 'block';
-        block.innerText = letterWithHarakat;
-        block.onclick = (e) => checkAnswer(letterWithHarakat, e.currentTarget);
+        block.innerText = data.char + currentHarakat;
+        block.onclick = (e) => checkAnswer(data, e.currentTarget);
         optionsContainer.appendChild(block);
     });
 }
 
-function checkAnswer(selectedLetter, blockElement) {
+// Efek Partikel Bintang
+function createParticleBurst(x, y) {
+    for (let i = 0; i < 8; i++) {
+        let particle = document.createElement('div');
+        particle.className = 'star-particle';
+        particle.style.left = x + 'px'; particle.style.top = y + 'px';
+        // Hitung arah ledakan acak
+        let angle = Math.random() * Math.PI * 2;
+        let distance = Math.random() * 80 + 40;
+        particle.style.setProperty('--dx', `${Math.cos(angle) * distance}px`);
+        particle.style.setProperty('--dy', `${Math.sin(angle) * distance}px`);
+        document.body.appendChild(particle);
+        setTimeout(() => particle.remove(), 800);
+    }
+}
+
+function checkAnswer(selectedData, blockElement) {
     if (isAnimating) return;
 
-    if (selectedLetter === currentTarget) {
+    if (selectedData.char === currentTargetData.char) {
         isAnimating = true;
         feedbackMessage.classList.add('hidden');
         optionsContainer.style.pointerEvents = 'none';
 
         const blockRect = blockElement.getBoundingClientRect();
         const targetRect = targetSlot.getBoundingClientRect();
-
         const deltaX = targetRect.left - blockRect.left + (targetRect.width - blockRect.width) / 2;
         const deltaY = targetRect.top - blockRect.top + (targetRect.height - blockRect.height) / 2;
 
@@ -172,6 +166,10 @@ function checkAnswer(selectedLetter, blockElement) {
         setTimeout(() => {
             blockElement.style.opacity = '0';
             targetSlot.className = 'slot filled';
+            targetText.innerText = selectedData.char + currentHarakat;
+            
+            // Panggil ledakan bintang di tengah slot
+            createParticleBurst(targetRect.left + targetRect.width/2, targetRect.top + targetRect.height/2);
             
             score += 10;
             feedbackMessage.innerText = translations[currentLang].correctFeedback;
@@ -181,12 +179,11 @@ function checkAnswer(selectedLetter, blockElement) {
             setTimeout(() => {
                 currentLevel++;
                 if (currentLevel > maxLevel) {
-                    showWinScreen();
-                } else {
-                    loadLevel();
-                }
-            }, 1000); 
-        }, 600); 
+                    mainGame.classList.add('hidden'); winScreen.classList.remove('hidden');
+                    document.getElementById('final-score').innerText = score;
+                } else { loadLevel(); }
+            }, 1200); 
+        }, 500); // Kecepatan terbang
 
     } else {
         score = Math.max(0, score - 5); 
@@ -194,10 +191,10 @@ function checkAnswer(selectedLetter, blockElement) {
         feedbackMessage.className = 'feedback wrong';
         updateScoreBoard();
         
-        blockElement.style.transform = 'translateX(5px)';
-        setTimeout(() => { blockElement.style.transform = 'translateX(-5px)'; }, 100);
-        setTimeout(() => { blockElement.style.transform = 'none'; }, 200);
-        setTimeout(() => { feedbackMessage.classList.add('hidden'); }, 1500);
+        blockElement.style.transform = 'translateX(8px)';
+        setTimeout(() => blockElement.style.transform = 'translateX(-8px)', 100);
+        setTimeout(() => blockElement.style.transform = 'none', 200);
+        setTimeout(() => feedbackMessage.classList.add('hidden'), 1500);
     }
 }
 
@@ -206,10 +203,11 @@ function updateScoreBoard() {
     scoreDisplay.innerText = score;
 }
 
-function showWinScreen() {
-    mainGame.classList.add('hidden');
-    winScreen.classList.remove('hidden');
-    finalScore.innerText = score;
-}
+// Interaksi pertama user untuk mengaktifkan Suara (Kebijakan Browser)
+document.body.addEventListener('click', function unlockAudio() {
+    const silent = new SpeechSynthesisUtterance('');
+    window.speechSynthesis.speak(silent);
+    document.body.removeEventListener('click', unlockAudio);
+}, { once: true });
 
 initGame();
