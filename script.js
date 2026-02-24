@@ -1,25 +1,26 @@
-// Daftar lengkap 29 huruf hijaiyyah (termasuk Hamzah)
+// Daftar lengkap 29 huruf hijaiyyah
 const allLetters = ['ا','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','ه','و','ء','ي'];
 
 const translations = {
     id: {
-        level: "Level", score: "Skor", instruction: "Pasangkan balok yang bentuknya sama!",
-        winTitle: "Masyaallah, Luar Biasa!", finalScore: "Skor Akhir Kamu",
-        restartBtn: "Main Lagi", correctFeedback: "Pas!", wrongFeedback: "Bukan yang itu!"
+        level: "Level", score: "Skor", instruction: "Ketuk kepingan yang pas untuk lubang ini!",
+        winTitle: "Masyaallah, Selesai!", finalScore: "Skor Akhir Kamu",
+        restartBtn: "Main Lagi", correctFeedback: "Pas!", wrongFeedback: "Belum pas, coba lagi!"
     },
     jp: {
-        level: "レベル", score: "スコア", instruction: "同じ形のブロックをはめよう！",
-        winTitle: "マシャアッラー、素晴らしい！", finalScore: "あなたの最終スコア",
-        restartBtn: "もう一度プレイ", correctFeedback: "ぴったり！", wrongFeedback: "ちがうよ！"
+        level: "レベル", score: "スコア", instruction: "この穴に合うピースをタップして！",
+        winTitle: "マシャアッラー、完了！", finalScore: "あなたの最終スコア",
+        restartBtn: "もう一度プレイ", correctFeedback: "ぴったり！", wrongFeedback: "合わないよ、もう一度！"
     }
 };
 
 let currentLang = 'id';
 let score = 0;
 let currentLevel = 1;
-let maxLevel = 29; // Maksimal level 29
+let maxLevel = 29;
 let targetPool = []; 
 let currentTarget = ''; 
+let isAnimating = false; // Penjaga agar tidak bisa klik saat animasi berjalan
 
 const levelDisplay = document.getElementById('level-display');
 const scoreDisplay = document.getElementById('score-display');
@@ -56,24 +57,23 @@ function initGame() {
     score = 0;
     currentLevel = 1;
     targetPool = shuffleArray(allLetters); 
-    
     mainGame.classList.remove('hidden');
     winScreen.classList.add('hidden');
-    
     updateScoreBoard();
     updateUIText();
     loadLevel();
 }
 
 function loadLevel() {
+    isAnimating = false; // Buka kunci klik
     targetSlot.className = 'slot empty';
     feedbackMessage.innerText = '';
     feedbackMessage.className = 'feedback hidden';
+    // Pastikan grid pilihan bisa diklik lagi
+    optionsContainer.style.pointerEvents = 'auto'; 
 
-    // Ambil 1 huruf sebagai jawaban
     currentTarget = targetPool.pop();
-
-    // INILAH KUNCI PERUBAHANNYA: Menampilkan huruf sebagai bayangan cetakan, bukan '?' lagi
+    // Tampilkan bayangan samar di lubang target
     targetSlot.innerText = currentTarget;
 
     let numOptions = 3;
@@ -98,41 +98,82 @@ function renderOptions(optionsArray) {
         const block = document.createElement('div');
         block.className = 'block';
         block.innerText = letter;
-        block.onclick = () => checkAnswer(letter);
+        // PENTING: Kita kirim juga elemen HTML-nya (e.currentTarget) agar bisa dianimasikan
+        block.onclick = (e) => checkAnswer(letter, e.currentTarget);
         optionsContainer.appendChild(block);
     });
 }
 
-function checkAnswer(selectedLetter) {
+// --- FUNGSI INTI BARU: CEK JAWABAN & ANIMASI TERBANG ---
+function checkAnswer(selectedLetter, blockElement) {
+    // Cegah klik ganda jika sedang ada animasi
+    if (isAnimating) return;
+
     if (selectedLetter === currentTarget) {
-        score += 10;
-        // Saat benar, ubah cetakan jadi balok utuh
-        targetSlot.className = 'slot filled';
+        // --- JAWABAN BENAR: Mulai Animasi Terbang ---
+        isAnimating = true;
+        feedbackMessage.classList.add('hidden');
         
-        feedbackMessage.innerText = translations[currentLang].correctFeedback;
-        feedbackMessage.className = 'feedback correct';
-        
-        updateScoreBoard();
-        
+        // 1. Kunci area pilihan agar tidak bisa klik balok lain
+        optionsContainer.style.pointerEvents = 'none';
+
+        // 2. Hitung Posisi Awal (Balok yang diklik) dan Akhir (Slot Target)
+        const blockRect = blockElement.getBoundingClientRect();
+        const targetRect = targetSlot.getBoundingClientRect();
+
+        // Hitung selisih jarak (Delta X dan Y) untuk terbang ke tengah target
+        // Ditambah penyesuaian sedikit agar pas di tengah karena ukuran mungkin beda tipis
+        const deltaX = targetRect.left - blockRect.left + (targetRect.width - blockRect.width) / 2;
+        const deltaY = targetRect.top - blockRect.top + (targetRect.height - blockRect.height) / 2;
+
+        // 3. Tambahkan kelas 'flying' untuk efek visual melayang
+        blockElement.classList.add('flying');
+        // 4. Terapkan perintah terbang (transform translate)
+        blockElement.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+
+        // 5. Tunggu sampai animasi selesai (sesuai durasi di CSS transition: 0.6s)
         setTimeout(() => {
-            currentLevel++;
-            if (currentLevel > maxLevel) {
-                showWinScreen();
-            } else {
-                loadLevel();
-                updateScoreBoard();
-            }
-        }, 1200); 
+            // --- SETELAH MENDARAT ---
+            
+            // Sembunyikan balok yang terbang tadi (karena sudah "masuk")
+            blockElement.style.opacity = '0';
+            
+            // Ubah lubang target menjadi terisi penuh
+            targetSlot.className = 'slot filled';
+            
+            // Update Skor dan Pesan
+            score += 10;
+            feedbackMessage.innerText = translations[currentLang].correctFeedback;
+            feedbackMessage.className = 'feedback correct';
+            updateScoreBoard();
+
+            // Jeda sebentar sebelum lanjut level berikutnya
+            setTimeout(() => {
+                currentLevel++;
+                if (currentLevel > maxLevel) {
+                    showWinScreen();
+                } else {
+                    loadLevel();
+                }
+            }, 1000); 
+
+        }, 600); // Waktu tunggu 600ms (harus sama dengan durasi transisi CSS)
 
     } else {
+        // --- JAWABAN SALAH ---
         score = Math.max(0, score - 5); 
         feedbackMessage.innerText = translations[currentLang].wrongFeedback;
         feedbackMessage.className = 'feedback wrong';
         updateScoreBoard();
         
+        // Efek getar sederhana (opsional, bisa ditambahkan nanti)
+        blockElement.style.transform = 'translateX(5px)';
+        setTimeout(() => { blockElement.style.transform = 'translateX(-5px)'; }, 100);
+        setTimeout(() => { blockElement.style.transform = 'none'; }, 200);
+
         setTimeout(() => {
             feedbackMessage.classList.add('hidden');
-        }, 1000);
+        }, 1500);
     }
 }
 
